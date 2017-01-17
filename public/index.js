@@ -231,7 +231,7 @@ rentals.forEach(function(rental){
               actor.amount = rental.price;
               break;
            case "owner" :
-              actor.amount = rental.commission.drivy;
+              actor.amount =   actor.amount = rental.price*0.7;
               break;
           case "assistance":
               actor.amount = rental.commission.assistance;
@@ -240,7 +240,7 @@ rentals.forEach(function(rental){
               actor.amount = rental.commission.drivy;
               break;
           case "insurance":
-              actor.amount = rental.price*0.7;
+              actor.amount = rental.commision.insurance;
               break;
          }
        })
