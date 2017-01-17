@@ -165,6 +165,89 @@ var rentalModifications = [{
   'pickupDate': '2015-12-05'
 }];
 
+/*
+found an object in a array of object
+
+arg : array - array to check
+      objectID - value to found
+      idFieldName - name of th efiled which need to be join
+      callback - function call if value is found
+
+return true if find false if not
+*/
+var foundObject = function(array,objectId,idFieldName,callback){
+  array.forEach(function(item){
+    if(item[idFieldName]==objectId){
+      callback(item);
+      return true;
+    }
+    return false;
+  })
+}
+
+// apply driver's modification
+rentalModifications.forEach(function(modifs){
+  foundObject(rentals,modifs.rentalId,"id",function(rental){
+    for (var modif in modifs) {
+        rental[modif] = modifs[modif];
+    }
+  })
+})
+
+// main fonction
+rentals.forEach(function(rental){
+
+     var dateStart = new Date(rental.pickupDate);
+     var dateEnd = new Date(rental.returnDate);
+     var time = (dateEnd.getTime()-dateStart.getTime())/(24*3600000)+1;
+     var distance = rental.distance;
+     var price = 0;
+     var reduction = 0;
+
+
+     // for each rent figure the time and distance price
+     foundObject(cars,rental.carId,"id",function(car){
+       price = time*car.pricePerDay + distance*car.pricePerKm;
+       return 0;
+     })
+
+     // figure reduction
+     if(time >= 2) reduction = price*0.1;
+     if(time >= 5) reduction = price*0.4;
+     if(time >= 11) reduction = price*0.5;
+
+     // figure commission
+     rental.price = price-reduction;
+     rental.commission.insurance = rental.price*0.3*0.5;
+     rental.commission.assistance = time;
+     rental.commission.drivy = rental.price*0.3 - rental.commission.insurance - rental.commission.assistance;
+     if(rental.options.deductibleReduction) rental.price += time*4 ;
+
+     // make transaction bettween all the actors
+     foundObject(actors,rental.id,"rentalId",function(rentActors){
+       rentActors.payment.forEach(function(actor){
+         switch(actor.who){
+           case "driver" :
+              actor.amount = rental.price;
+              break;
+           case "owner" :
+              actor.amount = rental.commission.drivy;
+              break;
+          case "assistance":
+              actor.amount = rental.commission.assistance;
+              break;
+          case "drivy":
+              actor.amount = rental.commission.drivy;
+              break;
+          case "insurance":
+              actor.amount = rental.price*0.7;
+              break;
+         }
+       })
+     })
+     return 0;
+  })
+
 console.log(cars);
 console.log(rentals);
 console.log(actors);
